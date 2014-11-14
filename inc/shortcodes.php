@@ -249,7 +249,7 @@ if( !function_exists( 'ms_global_search_page' ) ) {
 	        } else {
                 $countResult = count( $search );
 
-                if (has_action('ms_global_search_result', $search, $countResult)) {
+                if (has_action('ms_global_search_result')) {
                     echo do_action('ms_global_search_result', $search, $countResult);
                 }
                 else {
