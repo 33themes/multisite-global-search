@@ -210,12 +210,18 @@ if( !function_exists( 'ms_global_search_page' ) ) {
 			}
 			
 			// Search on pages.
-			if(get_query_var( 'msp' )) {
-                $post_type = "( post_type = 'post' OR post_type = 'page' )";
+            if(get_query_var( 'msp' )) {
+                $post_types = array('post','page');
 			} else {
-                $post_type = "post_type = 'post'";
-			}
-			
+                $post_types = array('post');
+            }
+
+            if (has_filter('ms_global_search_post_type'))
+                $post_types = apply_filters('ms_global_search_post_type', $post_types, get_query_var('msp'));
+
+            foreach($post_types as $_post_type_name)
+                $post_type = "( post_type IN ('".implode("','",$post_types)."'))";
+
 			// Show private posts
 			if ($userid != 0) {
     			$request = $wpdb->prepare( "SELECT ".$wpdb->base_prefix."v_posts.* from ".$wpdb->base_prefix."v_posts left join ".$wpdb->users." on ".$wpdb->users.".ID=".$wpdb->base_prefix."v_posts.post_author ".
@@ -230,57 +236,75 @@ if( !function_exists( 'ms_global_search_page' ) ) {
 			$search = $wpdb->get_results( $request );
 	        
 			// Show search results.
-			if( empty( $search ) ) { ?>
-				<h3 class='globalpage_title center'><?php _e( "Not found", 'ms-global-search' ) ?> <span class='ms-global-search_term'><?php echo stripslashes($term); ?></span><?php if( !empty( $wheresearch ) ) echo " ".__( 'in your blogs', 'ms-global-search' ); ?>.</h3>
-				<p class='globalpage_message center'><?php _e( "Sorry, but you are looking for something that isn't here.", 'ms-global-search' ) ?></p>
+            if( empty( $search ) ) { ?>
+
+                <?php if (has_action('ms_global_search_notfound')): ?>
+                    <?php echo do_action('ms_global_search_notfound', $term, $wheresearch); ?>
+                <?php else: ?>
+                    <h3 class='globalpage_title center'><?php _e( "Not found", 'ms-global-search' ) ?> <span class='ms-global-search_term'><?php echo stripslashes($term); ?></span><?php if( !empty( $wheresearch ) ) echo " ".__( 'in your blogs', 'ms-global-search' ); ?>.</h3>
+                    <p class='globalpage_message center'><?php _e( "Sorry, but you are looking for something that isn't here.", 'ms-global-search' ) ?></p>
+                <?php endif; ?>
+
 			<?php
 	        } else {
-	        	$countResult = count( $search );
-                if($countResult < 2){
-                    echo '<p>'.$countResult." ".__( 'match with', 'ms-global-search' )." ";
-                }else{
-                    echo '<p>'.$countResult." ".__( 'matches with', 'ms-global-search' )." ";
-                } ?>
-                <span class='ms-global-search_term'><?php echo stripslashes($term); ?></span><?php if( !empty( $wheresearch ) ) echo " ".__( 'in your blogs', 'ms-global-search' ); ?>.</p>
-                
-                <?php
-	            $blogid = '';
-	            foreach( $search as $s ) {
-	                $author = get_userdata( $s->post_author );
-	                if( $blogid != $s->blog_id ) {
-	                    $blogid = $s->blog_id; ?>
-	                    
-	                    <h2 class='globalblog_title'><?php echo get_blog_option( $blogid, 'blogname' ) ?></h2>
-	                <?php
-	                } ?>
+                $countResult = count( $search );
+
+                if (has_action('ms_global_search_result', $search, $countResult)) {
+                    echo do_action('ms_global_search_result', $search, $countResult);
+                }
+                else {
+                    if($countResult < 2){
+                        echo '<p>'.$countResult." ".__( 'match with', 'ms-global-search' )." ";
+                    }else{
+                        echo '<p>'.$countResult." ".__( 'matches with', 'ms-global-search' )." ";
+                    } ?>
+                    <span class='ms-global-search_term'><?php echo stripslashes($term); ?></span><?php if( !empty( $wheresearch ) ) echo " ".__( 'in your blogs', 'ms-global-search' ); ?>.</p>
+                    
+                    <?php
+                    $blogid = '';
+                    foreach( $search as $s ) {
+                        $author = get_userdata( $s->post_author );
+                        if( $blogid != $s->blog_id ) {
+                            $blogid = $s->blog_id; ?>
+                            
+                            <h2 class='globalblog_title'><?php echo get_blog_option( $blogid, 'blogname' ) ?></h2>
+                        <?php
+                        } ?>
 	
-	                <div <?php post_class( 'globalsearch_post' ) ?>>
-	                	<div class="globalsearch_header">
-	                    	<h2 id="post-<?php echo $s->ID.$s->blog_id; ?>" class="globalsearch_title"><a href="<?php echo get_blog_permalink( $s->blog_id, $s->ID ); ?>" rel="bookmark" title="<?php echo __( 'Permanent Link to', 'ms-global-search' ).' '.$s->post_title; ?>"><?php echo $s->post_title ?></a></h2>
-	                    	<p class="globalsearch_meta">
-								<span class="globalsearch_comment"><?php ms_global_search_get_comments_link( $s ); ?></span>
-								<span class="globalsearch_date"><?php echo date( __( 'j/m/y, G:i', 'ms-global-search' ) ,strtotime( $s->post_date ) ); ?></span>
-								<span class="globalsearch_author"><?php echo '<a href="http://' . $s->domain.$s->path.'author/'.$author->user_nicename . '" title="' . $author->user_nicename . '">' . $author->user_nicename . '</a>'; ?></span>
-								<?php echo ms_global_search_get_edit_link( $s, '<span class="globalsearch_edit">', '</span>' ); ?>
-							</p>
-						</div>
-						
-						<div class="globalsearch_content">
-	                    	<div class="entry">
-	                    		<?php
-	                    		if(strcmp($excerpt, "yes") == 0)
-	                    			echo ms_global_search_get_the_excerpt( $s );
-	                        	else
-	                        		echo ms_global_search_get_the_content( $s ); ?>
-	                    	</div>
-						</div>
-	                </div>
-	            <?php
-	            }
+                        <div <?php post_class( 'globalsearch_post' ) ?>>
+                            <div class="globalsearch_header">
+                                <h2 id="post-<?php echo $s->ID.$s->blog_id; ?>" class="globalsearch_title"><a href="<?php echo get_blog_permalink( $s->blog_id, $s->ID ); ?>" rel="bookmark" title="<?php echo __( 'Permanent Link to', 'ms-global-search' ).' '.$s->post_title; ?>"><?php echo $s->post_title ?></a></h2>
+                                <p class="globalsearch_meta">
+                                    <span class="globalsearch_comment"><?php ms_global_search_get_comments_link( $s ); ?></span>
+                                    <span class="globalsearch_date"><?php echo date( __( 'j/m/y, G:i', 'ms-global-search' ) ,strtotime( $s->post_date ) ); ?></span>
+                                    <span class="globalsearch_author"><?php echo '<a href="http://' . $s->domain.$s->path.'author/'.$author->user_nicename . '" title="' . $author->user_nicename . '">' . $author->user_nicename . '</a>'; ?></span>
+                                    <?php echo ms_global_search_get_edit_link( $s, '<span class="globalsearch_edit">', '</span>' ); ?>
+                                </p>
+                            </div>
+                            
+                            <div class="globalsearch_content">
+                                <div class="entry">
+                                    <?php
+                                    if(strcmp($excerpt, "yes") == 0)
+                                        echo ms_global_search_get_the_excerpt( $s );
+                                    else
+                                        echo ms_global_search_get_the_content( $s ); ?>
+                                </div>
+                            </div>
+                        </div>
+                    <?php
+                    }
+                }
 	        }
-	    } else { ?>
-		    <h3 class='globalpage_title center'><?php _e( "Not found", 'ms-global-search' ) ?></h3>
-	        <p class='globalpage_message center'><?php _e( "Sorry, but you are looking for something that isn't here.", 'ms-global-search' ) ?></p>
+        } else { ?>
+
+            <?php if (has_action('ms_global_search_notfound')): ?>
+                <?php echo do_action('ms_global_search_notfound', $term, $wheresearch); ?>
+            <?php else: ?>
+                <h3 class='globalpage_title center'><?php _e( "Not found", 'ms-global-search' ) ?> <span class='ms-global-search_term'><?php echo stripslashes($term); ?></span><?php if( !empty( $wheresearch ) ) echo " ".__( 'in your blogs', 'ms-global-search' ); ?>.</h3>
+                <p class='globalpage_message center'><?php _e( "Sorry, but you are looking for something that isn't here.", 'ms-global-search' ) ?></p>
+            <?php endif; ?>
+
 	    <?php
 	    }
 	}
