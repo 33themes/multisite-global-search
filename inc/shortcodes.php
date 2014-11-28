@@ -157,8 +157,8 @@ if( !function_exists( 'ms_global_search_get_comments_link' ) ) {
 
 if( !function_exists( 'ms_global_search_page' ) ) {
 	function ms_global_search_page( $atts ) {
-		global $wp_query, $wpdb;
-		
+        global $wp_query, $wpdb;
+
 		extract( shortcode_atts( array( 'excerpt' => 'no' ), $atts ) );
 		
 		$term = strip_tags( apply_filters( 'get_search_query', get_query_var( 'mssearch' ) ) );
@@ -193,21 +193,21 @@ if( !function_exists( 'ms_global_search_page' ) ) {
                 }
             }
             
-		    $wheresearch = '';
-			// Search only on user blogs.
-			$userid = get_current_user_id();
-			if( strcmp( apply_filters ( 'get_search_query', get_query_var( 'mswhere' ) ), 'my' ) == 0 && $userid != 0 ) {
-				$userblogs = get_blogs_of_user( $userid );
-				
-				$i=0;
-				foreach( $userblogs as $ub ) {
-					if( $i != 0 ) $wheresearch .= " OR ";
-					else $wheresearch .= "( ";
-					$i++;
-					$wheresearch .= $wpdb->base_prefix."v_posts.blog_id = ".$ub->userblog_id;
-					if( count( $userblogs ) == $i ) $wheresearch .= " ) AND ";
-				}
-			}
+            $wheresearch = '';
+            // Search only on user blogs.
+		    $userid = get_current_user_id();
+		    if( strcmp( apply_filters ( 'get_search_query', get_query_var( 'mswhere' ) ), 'my' ) == 0 && $userid != 0 ) {
+		    	$userblogs = get_blogs_of_user( $userid );
+		    	
+		    	$i=0;
+		    	foreach( $userblogs as $ub ) {
+		    		if( $i != 0 ) $wheresearch .= " OR ";
+		    		else $wheresearch .= "( ";
+		    		$i++;
+		    		$wheresearch .= $wpdb->base_prefix."v_posts.blog_id = ".$ub->userblog_id;
+		    		if( count( $userblogs ) == $i ) $wheresearch .= " ) AND ";
+		    	}
+		    }
 			
 			// Search on pages.
             if(get_query_var( 'msp' )) {
@@ -231,10 +231,11 @@ if( !function_exists( 'ms_global_search_page' ) ) {
   		        $request = $wpdb->prepare( "SELECT ".$wpdb->base_prefix."v_posts.* from ".$wpdb->base_prefix."v_posts left join ".$wpdb->users." on ".$wpdb->users.".ID=".$wpdb->base_prefix."v_posts.post_author ".
                 "where ".$wheresearch." ".$termsearch.
                 "AND post_status = 'publish' AND ".$post_type." ORDER BY ".$wpdb->base_prefix."v_posts.blog_id ASC, ".$wpdb->base_prefix."v_posts.post_date DESC, ".$wpdb->base_prefix."v_posts.comment_count DESC" );
-			}
-			
-			$search = $wpdb->get_results( $request );
-	        
+            }
+
+            $search = $wpdb->get_results( $request );
+
+
 			// Show search results.
             if( empty( $search ) ) { ?>
 

@@ -6,21 +6,21 @@
 function ms_global_search_build_views_drop( $trigger ) {
     global $wpdb;
 
-    $blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id, domain, path FROM {$wpdb->blogs} WHERE blog_id != {$trigger} AND site_id = {$wpdb->siteid} AND public = '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' ORDER BY registered DESC" ) );
+    $blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id, domain, path FROM {$wpdb->blogs} WHERE blog_id != {$trigger} AND site_id = {$wpdb->siteid} AND public >= '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' ORDER BY registered DESC" ) );
 	ms_global_search_v_query( $blogs );
 }
 
 function ms_global_search_build_views_add() {
     global $wpdb;
 	
-    $blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id, domain, path FROM {$wpdb->blogs} WHERE site_id = {$wpdb->siteid} AND public = '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' ORDER BY registered DESC" ) );
+    $blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id, domain, path FROM {$wpdb->blogs} WHERE site_id = {$wpdb->siteid} AND public >= '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' ORDER BY registered DESC" ) );
     ms_global_search_v_query( $blogs );
 }
 
 function ms_global_search_build_views_activate( $trigger ) {
     global $wpdb;
 
-    $blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id, domain, path FROM {$wpdb->blogs} WHERE ( blog_id = {$trigger} AND public = '1' AND archived = '0' AND mature = '0' AND spam = '0' ) OR ( site_id = {$wpdb->siteid} AND public = '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' ) ORDER BY registered DESC" ) );
+    $blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id, domain, path FROM {$wpdb->blogs} WHERE ( blog_id = {$trigger} AND public >= '1' AND archived = '0' AND mature = '0' AND spam = '0' ) OR ( site_id = {$wpdb->siteid} AND public >= '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' ) ORDER BY registered DESC" ) );
     
     ms_global_search_v_query( $blogs );
 }
@@ -28,7 +28,7 @@ function ms_global_search_build_views_activate( $trigger ) {
 function ms_global_search_build_views_unarchive( $trigger ) {
     global $wpdb;
 
-    $blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id, domain, path FROM {$wpdb->blogs} WHERE ( blog_id = {$trigger} AND public = '1' AND deleted = '0' AND mature = '0' AND spam = '0' ) OR ( site_id = {$wpdb->siteid} AND public = '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' ) ORDER BY registered DESC" ) );
+    $blogs = $wpdb->get_results( $wpdb->prepare( "SELECT blog_id, domain, path FROM {$wpdb->blogs} WHERE ( blog_id = {$trigger} AND public >= '1' AND deleted = '0' AND mature = '0' AND spam = '0' ) OR ( site_id = {$wpdb->siteid} AND public >= '1' AND archived = '0' AND mature = '0' AND spam = '0' AND deleted = '0' ) ORDER BY registered DESC" ) );
     ms_global_search_v_query( $blogs );
 }
 
